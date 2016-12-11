@@ -203,6 +203,15 @@ impl Table {
             Seat::West  => &self.players_[3],
         }
     }
+
+    pub fn set_player(&mut self, s : Seat, name : &str) {
+        match s {
+            Seat::North => self.players_[0] = String::from(name),
+            Seat::East  => self.players_[1] = String::from(name),
+            Seat::South => self.players_[2] = String::from(name),
+            Seat::West  => self.players_[3] = String::from(name),
+        }
+    }
 }
 
 impl Entry {
