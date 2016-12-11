@@ -39,6 +39,17 @@ pub struct Contract {
     pub doubled : ContractDoubled,
 }
 
+impl Contract {
+    pub fn new(suit : ContractSuit, number : ContractNumber,
+               doubled : ContractDoubled) -> Contract {
+        Contract {
+            suit : suit,
+            number : number,
+            doubled : doubled,
+        }
+    }
+}
+
 fn penalty_points(double : ContractDoubled,
                   is_vulnerable: bool) -> (i32, i32, i32) {
     match (double, is_vulnerable) {
@@ -57,11 +68,12 @@ pub fn score_game(contract : Contract,
         let (first, second, fourth) =
             penalty_points(contract.doubled, is_vulnerable);
         let undertricks = -margin;
-        match undertricks {
+        let value = match undertricks {
             1 => first,
             2 | 3 => first + (undertricks - 1) * second,
-            _ => first + 2 * second + (undertricks - 2) * fourth,
-        }
+            _ => first + 2 * second + (undertricks - 3) * fourth,
+        };
+        -value
     } else {
         // First, compute trick values.
         let trick_value = match contract.suit {
@@ -81,7 +93,7 @@ pub fn score_game(contract : Contract,
         let contract_value = doubling_bonus *
             (first_trick + (contract.number.into_i32() - 1) * trick_value);
 
-        let normal_bonus = if is_vulnerable { 100 } else { 50 }; 
+        let normal_bonus = 50;
         let game_bonus = if is_vulnerable { 500 } else { 300 };
 
         let making_bonus_awarded =
@@ -197,4 +209,12 @@ impl Entry {
         self.value_  = Some(score_game(contract, margin, self.is_vulnerable()));
         Ok(())
     }
+}
+
+pub fn score_3s_v_p3() {
+    println!("bluh {}", score_game(Contract::new(ContractSuit::Spades,
+                                     ContractNumber::Three,
+                                     ContractDoubled::Undoubled),
+                        3,
+                        true));
 }
