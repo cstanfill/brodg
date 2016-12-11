@@ -70,6 +70,8 @@ fn draw_contract_value(window : &pancurses::Window, contract : Contract,
     window.mvaddstr(1, 1, &contract.to_string());
 
     let number = contract.number.into_i32();
+    let normal_scorer = Score::from_contract(contract, false);
+    let vuln_scorer = Score::from_contract(contract, true);
     for i in 0..8 - number {
         window.mv(2 + i, 2);
         window.color_set(CURSOR_NORMAL);
@@ -77,7 +79,7 @@ fn draw_contract_value(window : &pancurses::Window, contract : Contract,
         if !is_vulnerable {
             window.attron(pancurses::A_BOLD);
         }
-        window.addstr(&format!("{:5}", score_game(contract, i, false)));
+        window.addstr(&format!("{:5}", normal_scorer.score_result(i)));
         if is_vulnerable {
             window.attron(pancurses::A_BOLD);
         } else {
@@ -85,7 +87,20 @@ fn draw_contract_value(window : &pancurses::Window, contract : Contract,
         }
         window.color_set(CURSOR_VULNERABLE);
         window.attroff(pancurses::A_BOLD);
-        window.addstr(&format!("{:5}", score_game(contract, i, true)));
+        window.addstr(&format!("{:5}", vuln_scorer.score_result(i)));
+    }
+    window.color_set(CURSOR_NORMAL);
+}
+
+fn draw_setting_value(window : &pancurses::Window, contract : Contract,
+                       is_vulnerable : bool) {
+    let number = contract.number.into_i32();
+    let scorer = Score::from_contract(contract, is_vulnerable);
+    for i in 1..7 + number {
+        window.mv(i, 1);
+        window.color_set(CURSOR_UNDERTRICK);
+        window.addstr(&format!("{:3}", -i));
+        window.addstr(&format!("{:6}", scorer.score_result(-i)));
     }
     window.color_set(CURSOR_NORMAL);
 }
@@ -102,11 +117,13 @@ fn main() {
   init_pair(CURSOR_CONTRACT,  pancurses::COLOR_GREEN, pancurses::COLOR_BLACK);
   window.refresh();
   let mut input = String::new();
-  let mut table = Table::new();
+  let table = Table::new();
   let tablewin = window.subwin(9, 15, 1, 0).unwrap();
   let contractwin = window.subwin(10, 15, 0, 14).unwrap();
+  let settingwin = window.subwin(15, 12, 0, 28).unwrap();
   loop {
       window.clear();
+      settingwin.border('|','|','-','-','+','+','+','+');
       contractwin.border('|','|','-','-','+','+','+','+');
       tablewin.border('|','|','-','-','+','+','+','+');
       draw_table(&tablewin, &table, Seat::North);
@@ -116,6 +133,7 @@ fn main() {
       };
       if let Some(c) = contract {
           draw_contract_value(&contractwin, c, false);
+          draw_setting_value(&settingwin, c, false);
       };
       let error_loc = get_error_cursor(parse_err);
       window.mv(0, 0);
