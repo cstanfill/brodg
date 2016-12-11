@@ -1,0 +1,7 @@
+[package]
+name = "brodg"
+version = "0.1.0"
+authors = ["colin <colin.stanfill@gmail.com>"]
+
+[dependencies]
+pancurses = "0.7"
