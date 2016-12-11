@@ -1,12 +1,12 @@
 use data;
 use std::str::FromStr;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ContractParseError {
     Incomplete,
     InvalidNumber(char),
     InvalidSuit(String),
-    InvalidTrailing(i32, char),
+    InvalidTrailing(usize, char),
 }
 
 impl FromStr for data::Contract {
