@@ -1,40 +1,27 @@
 pub mod data;
+pub mod parse;
 
-use data::{Contract, ContractDoubled, ContractNumber, ContractSuit,
-            score_game};
+#[cfg(test)]
+use data::score_game;
+#[cfg(test)]
+use parse::parse_contract;
 
 #[test]
 fn score_3s_v_p3() {
-    assert!(score_game(Contract::new(ContractSuit::Spades,
-                                     ContractNumber::Three,
-                                     ContractDoubled::Undoubled),
-                        3,
-                        true) == 230);
+    assert!(score_game(parse_contract("3S").unwrap(), 3, true) == 230);
 }
 
 #[test]
 fn score_2nt_d_p4() {
-    assert!(score_game(Contract::new(ContractSuit::NoTrump,
-                                     ContractNumber::Two,
-                                     ContractDoubled::Doubled),
-                        4,
-                        false) == 890);
+    assert!(score_game(parse_contract("2NTX").unwrap(), 4, false) == 890);
 }
 
 #[test]
 fn score_d_m6() {
-    assert!(score_game(Contract::new(ContractSuit::NoTrump,
-                                     ContractNumber::Two,
-                                     ContractDoubled::Doubled),
-                        -6,
-                        false) == -1400);
+    assert!(score_game(parse_contract("1SX").unwrap(), -6, false) == -1400);
 }
 
 #[test]
 fn score_6c_v_rd_p1() {
-    assert!(score_game(Contract::new(ContractSuit::Clubs,
-                                     ContractNumber::Six,
-                                     ContractDoubled::Redoubled),
-                        1,
-                        true) == 2230);
+    assert!(score_game(parse_contract("6CXX").unwrap(), 1, true) == 2230);
 }

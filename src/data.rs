@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum Seat {
     North, East, South, West
@@ -6,6 +8,19 @@ pub enum Seat {
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum ContractSuit {
     Clubs, Diamonds, Hearts, Spades, NoTrump
+}
+
+impl fmt::Display for ContractSuit {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}",
+               match *self {
+                   ContractSuit::Clubs    => "C",
+                   ContractSuit::Diamonds => "D",
+                   ContractSuit::Hearts   => "H",
+                   ContractSuit::Spades   => "S",
+                   ContractSuit::NoTrump  => "NT",
+               })
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -27,9 +42,26 @@ impl ContractNumber {
     }
 }
 
+impl fmt::Display for ContractNumber {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.into_i32())
+    }
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum ContractDoubled {
     Undoubled, Doubled, Redoubled
+}
+
+impl fmt::Display for ContractDoubled {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}",
+               match *self {
+                   ContractDoubled::Undoubled   => "",
+                   ContractDoubled::Doubled     => "X",
+                   ContractDoubled::Redoubled   => "XX",
+               })
+    }
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -37,6 +69,12 @@ pub struct Contract {
     pub suit : ContractSuit,
     pub number : ContractNumber,
     pub doubled : ContractDoubled,
+}
+
+impl fmt::Display for Contract {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}{}{}", self.number, self.suit, self.doubled)
+    }
 }
 
 impl Contract {
@@ -85,9 +123,9 @@ pub fn score_game(contract : Contract,
             _                     => trick_value,
         };
         let doubling_bonus = match contract.doubled {
-            ContractDoubled::Undoubled => 1, 
-            ContractDoubled::Doubled   => 2, 
-            ContractDoubled::Redoubled => 4, 
+            ContractDoubled::Undoubled => 1,
+            ContractDoubled::Doubled   => 2,
+            ContractDoubled::Redoubled => 4,
         };
         // The contract value determines the game or non-game bonus.
         let contract_value = doubling_bonus *
@@ -209,12 +247,8 @@ impl Entry {
         self.value_  = Some(score_game(contract, margin, self.is_vulnerable()));
         Ok(())
     }
-}
 
-pub fn score_3s_v_p3() {
-    println!("bluh {}", score_game(Contract::new(ContractSuit::Spades,
-                                     ContractNumber::Three,
-                                     ContractDoubled::Undoubled),
-                        3,
-                        true));
+    pub fn name(&self) -> &str {
+        &self.name_
+    }
 }
