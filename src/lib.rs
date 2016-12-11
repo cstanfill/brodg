@@ -1,5 +1,7 @@
 pub mod data;
 pub mod parse;
+pub mod score;
+pub mod contract;
 
 #[cfg(test)]
 use data::score_game;

@@ -2,8 +2,10 @@ extern crate pancurses;
 extern crate brodg;
 
 use pancurses::{initscr, init_pair, endwin, Input};
-use brodg::data::*;
+use brodg::data::{Entry, Table};
+use brodg::contract::{Contract, ContractDoubled, Seat};
 use brodg::parse::ContractParseError;
+use brodg::score::Score;
 
 const CURSOR_NORMAL     : i16 = 1;
 const CURSOR_ERROR      : i16 = 3;
@@ -92,6 +94,11 @@ fn draw_contract_value(window : &pancurses::Window, contract : Contract,
     window.color_set(CURSOR_NORMAL);
 }
 
+fn draw_entry(window : &pancurses::Window, entry : &Entry) {
+    window.addstr(&format!("{:<10}", entry.name()));
+    window.addch('|');
+}
+
 fn draw_setting_value(window : &pancurses::Window, contract : Contract,
                        is_vulnerable : bool) {
     let number = contract.number.into_i32();
@@ -121,6 +128,7 @@ fn main() {
   let tablewin = window.subwin(9, 15, 1, 0).unwrap();
   let contractwin = window.subwin(10, 15, 0, 14).unwrap();
   let settingwin = window.subwin(15, 12, 0, 28).unwrap();
+  let e = Entry::new(&table, Seat::North, 1);
   loop {
       window.clear();
       settingwin.border('|','|','-','-','+','+','+','+');

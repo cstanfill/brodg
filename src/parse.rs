@@ -1,5 +1,6 @@
-use data;
 use std::str::FromStr;
+
+use contract::{Contract, ContractNumber, ContractSuit, ContractDoubled};
 
 // The idea here is to let the frontend know where to start marking the
 // contract name as invalid. `Incomplete` does not count as invalid if you
@@ -12,20 +13,20 @@ pub enum ContractParseError {
     InvalidTrailing(usize, char),
 }
 
-impl FromStr for data::Contract {
+impl FromStr for Contract {
     type Err = ContractParseError;
-    fn from_str(name : &str) -> Result<data::Contract, ContractParseError> {
+    fn from_str(name : &str) -> Result<Contract, ContractParseError> {
         // TODO: Reform this? Maybe?
         let mut chars = name.chars();
         let mut index = 0;
         let value = match chars.next() {
-            Some('1') => data::ContractNumber::One,
-            Some('2') => data::ContractNumber::Two,
-            Some('3') => data::ContractNumber::Three,
-            Some('4') => data::ContractNumber::Four,
-            Some('5') => data::ContractNumber::Five,
-            Some('6') => data::ContractNumber::Six,
-            Some('7') => data::ContractNumber::SEVEN,
+            Some('1') => ContractNumber::One,
+            Some('2') => ContractNumber::Two,
+            Some('3') => ContractNumber::Three,
+            Some('4') => ContractNumber::Four,
+            Some('5') => ContractNumber::Five,
+            Some('6') => ContractNumber::Six,
+            Some('7') => ContractNumber::SEVEN,
             Some(c)   => return Err(ContractParseError::InvalidNumber(c)),
             None      => return Err(ContractParseError::Incomplete),
         };
@@ -35,16 +36,16 @@ impl FromStr for data::Contract {
             Some('N') => {
                 index += 1;
                 match chars.next() {
-                    Some('T') => data::ContractSuit::NoTrump,
+                    Some('T') => ContractSuit::NoTrump,
                     Some(c)   => return Err(ContractParseError::InvalidSuit(
                             vec!['N', c].into_iter().collect())),
                     None   => return Err(ContractParseError::Incomplete),
                 }
             },
-            Some('C') => data::ContractSuit::Clubs,
-            Some('D') => data::ContractSuit::Diamonds,
-            Some('H') => data::ContractSuit::Hearts,
-            Some('S') => data::ContractSuit::Spades,
+            Some('C') => ContractSuit::Clubs,
+            Some('D') => ContractSuit::Diamonds,
+            Some('H') => ContractSuit::Hearts,
+            Some('S') => ContractSuit::Spades,
             Some(c)   =>
                 return Err(ContractParseError::InvalidSuit(c.to_string())),
             None      => return Err(ContractParseError::Incomplete),
@@ -58,26 +59,26 @@ impl FromStr for data::Contract {
                     match chars.next() {
                         Some('X') => {
                             index += 1;
-                            data::ContractDoubled::Redoubled
+                            ContractDoubled::Redoubled
                         },
                         Some(c)   => return Err(
                             ContractParseError::InvalidTrailing(index, c)),
-                        None      => data::ContractDoubled::Doubled,
+                        None      => ContractDoubled::Doubled,
                     }
                 },
                 Some(c) => return Err(
                     ContractParseError::InvalidTrailing(index, c)),
-                None => data::ContractDoubled::Undoubled,
+                None => ContractDoubled::Undoubled,
             };
         if let Some(c) = chars.next() {
             return Err(ContractParseError::InvalidTrailing(index, c));
         }
-        Ok(data::Contract::new(suit, value, doubling))
+        Ok(Contract::new(suit, value, doubling))
     }
 }
 
 pub fn parse_contract(name : &str)
-    -> Result<data::Contract, ContractParseError> {
+    -> Result<Contract, ContractParseError> {
     name.parse()
 }
 
