@@ -2,7 +2,9 @@ extern crate pancurses;
 extern crate brodg;
 
 use pancurses::{initscr, endwin, Input};
+use brodg::data::score_game;
 use brodg::data::Contract;
+use brodg::data::ContractDoubled;
 use brodg::parse::parse_contract;
 use brodg::parse::ContractParseError;
 
@@ -38,6 +40,16 @@ fn main() {
           window.mv(2, 0);
           window.color_set(1);
           window.addstr(&c.to_string());
+          let number = c.number.into_i32();
+
+          for i in 0..8 - number {
+              window.mv(3 + i, 0);
+              window.color_set(1);
+              window.addstr(&format!("{}", i + number));
+              window.addstr(&format!("{:5}", score_game(c, i, false)));
+              window.color_set(2);
+              window.addstr(&format!("{:5}", score_game(c, i, true)));
+          }
       };
       let error_loc = get_error_cursor(parse_err);
       window.mv(0, 0);
@@ -48,6 +60,7 @@ fn main() {
           }
           window.addch(c);
       }
+
       window.refresh();
 
       match window.getch() {

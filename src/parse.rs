@@ -1,6 +1,9 @@
 use data;
 use std::str::FromStr;
 
+// The idea here is to let the frontend know where to start marking the
+// contract name as invalid. `Incomplete` does not count as invalid if you
+// still haven't hit enter.
 #[derive(Clone, PartialEq, Eq, Debug)]
 pub enum ContractParseError {
     Incomplete,
@@ -12,6 +15,7 @@ pub enum ContractParseError {
 impl FromStr for data::Contract {
     type Err = ContractParseError;
     fn from_str(name : &str) -> Result<data::Contract, ContractParseError> {
+        // TODO: Reform this? Maybe?
         let mut chars = name.chars();
         let mut index = 0;
         let value = match chars.next() {
