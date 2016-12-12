@@ -77,9 +77,23 @@ impl FromStr for Contract {
     }
 }
 
-pub fn parse_contract(name : &str)
-    -> Result<Contract, ContractParseError> {
+// Only use directly in testing
+fn parse_contract(name : &str) -> Result<Contract, ContractParseError> {
     name.parse()
+}
+
+pub fn get_error_cursor(e : Option<ContractParseError>) -> Option<usize> {
+    match e {
+        None | Some(ContractParseError::Incomplete)     => None,
+        Some(ContractParseError::InvalidNumber(_))      => Some(0),
+        Some(ContractParseError::InvalidSuit(_))        => Some(1),
+        Some(ContractParseError::InvalidTrailing(i, _)) => Some(i),
+    }
+}
+
+// Actual users should use this
+pub fn parse_input(input : &str) -> Result<Contract, ContractParseError> {
+    input.to_uppercase().parse()
 }
 
 #[cfg(test)]
