@@ -97,6 +97,31 @@ fn draw_contract_value(window : &pancurses::Window, contract : Contract,
 fn draw_entry(window : &pancurses::Window, entry : &Entry) {
     window.addstr(&format!("{:<10}", entry.name()));
     window.addch('|');
+    window.addch(if entry.is_vulnerable() { 'V' } else { ' ' });
+    window.addch('|');
+    match entry.contract() {
+        Some(c) => window.addstr(&format!("{:6}", c.to_string())),
+        None    => window.addstr("      "),
+    };
+    window.addch('|');
+    match entry.result() {
+        Some(c) => window.addstr(&format!("{:+3}", c)),
+        None    => window.addstr("   "),
+    };
+    window.addch('|');
+    match entry.value() {
+        Some(v) =>
+            match entry.declarer() {
+                Some(Seat::North) | Some(Seat::South) =>
+                    window.addstr(&format!("{:+5}|     ", v)),
+                Some(Seat::East)  | Some(Seat::West)  =>
+                    window.addstr(&format!("     |{:+5}", v)),
+                None => window.addstr("     |     "),
+            },
+        None => window.addstr("     |     ")
+    };
+    window.addch('|');
+    window.addch('\n');
 }
 
 fn draw_setting_value(window : &pancurses::Window, contract : Contract,
@@ -128,12 +153,24 @@ fn main() {
   let tablewin = window.subwin(9, 15, 1, 0).unwrap();
   let contractwin = window.subwin(10, 15, 0, 14).unwrap();
   let settingwin = window.subwin(15, 12, 0, 28).unwrap();
-  let e = Entry::new(&table, Seat::North, 1);
+  let entrieswin = window.subwin(5, 40, 15, 0).unwrap();
+  let mut e = Entry::new(&table, Seat::North, 1);
+  e.set_contract("3NT".parse().unwrap());
+  let mut f = Entry::new(&table, Seat::South, 2);
+  f.set_contract("6NTXX".parse().unwrap());
+  f.record(-1).unwrap();
+  let mut g = Entry::new(&table, Seat::East, 3);
+  g.set_contract("4H".parse().unwrap());
+  g.record(1).unwrap();
   loop {
       window.clear();
       settingwin.border('|','|','-','-','+','+','+','+');
       contractwin.border('|','|','-','-','+','+','+','+');
       tablewin.border('|','|','-','-','+','+','+','+');
+      entrieswin.mv(0,0);
+      draw_entry(&entrieswin, &e);
+      draw_entry(&entrieswin, &f);
+      draw_entry(&entrieswin, &g);
       draw_table(&tablewin, &table, Seat::North);
       let (parse_err, contract) = match parse_contract_nice(&input) {
           Ok(c)  => (None,    Some(c)),

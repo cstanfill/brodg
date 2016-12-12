@@ -56,8 +56,8 @@ impl Entry {
             contract_ : None,
             score_ : None,
             board_num_ : board_num,
-            ns_vulnerable_ : (board_num & 1 == 1),
-            ew_vulnerable_ : (board_num & 2 == 2),
+            ns_vulnerable_ : ((board_num - 1) & 1 == 1),
+            ew_vulnerable_ : ((board_num - 1) & 2 == 2),
             result_ : None,
             value_ : None,
         }
@@ -70,6 +70,10 @@ impl Entry {
 
     pub fn has_contract(&self) -> bool {
         self.contract_.is_some()
+    }
+
+    pub fn contract(&self) -> Option<Contract> {
+        self.contract_
     }
 
     pub fn board_num(&self) -> u32 {
@@ -95,5 +99,17 @@ impl Entry {
 
     pub fn name(&self) -> &str {
         &self.name_
+    }
+
+    pub fn result(&self) -> Option<i32> {
+        self.result_
+    }
+
+    pub fn value(&self) -> Option<i32> {
+        self.value_
+    }
+
+    pub fn declarer(&self) -> Option<Seat> {
+        Some(self.declarer_)
     }
 }
