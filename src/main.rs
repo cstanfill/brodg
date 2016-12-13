@@ -14,6 +14,7 @@ const CURSOR_ENTERING   : i16 = 6;
 
 fn real_main() {
     let window = initscr();
+    window.keypad(true);
     pancurses::start_color();
     pancurses::noecho();
     pancurses::cbreak();

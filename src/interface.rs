@@ -47,7 +47,7 @@ struct InputState {
 impl InputState {
     pub fn new() -> InputState {
         InputState {
-            selection_ : Selection::Unselected,
+            selection_ : Selection::NameSelect(Seat::North),
             entry_ : None,
         }
     }
@@ -182,8 +182,13 @@ impl Interface {
     pub fn get_input(&mut self) -> bool {
         let c = match self.root_window_.getch() {
             Some(Input::Character(cc)) => cc,
-            None => { return false; }
-            _    => { return true; }
+            Some(Input::KeyLeft)  => { self.move_left(); return true; },
+            Some(Input::KeyRight) => { self.move_right(); return true; },
+            Some(Input::KeyUp)    => { self.move_up(); return true; },
+            Some(Input::KeyDown)  => { self.move_down(); return true; },
+            Some(Input::KeyBackspace) => '\x7f',
+            None => { return false; },
+            _    => { return true; },
         };
         match c {
             '\t' => self.cycle_input(),
@@ -193,21 +198,54 @@ impl Interface {
         return true;
     }
 
+    fn navigate(&mut self, c : char) {
+        match c {
+            'h' => self.move_left(),
+            'j' => self.move_down(),
+            'k' => self.move_up(),
+            'l' => self.move_right(),
+            _   => (),
+        }
+    }
+
     fn cycle_input(&mut self) {
         let new_selection = match self.input_state_.selection_ {
-            Selection::Unselected => Selection::NameSelect(Seat::North),
-            Selection::NameSelect(Seat::North) =>
-                Selection::NameSelect(Seat::East),
-            Selection::NameSelect(Seat::East) =>
-                Selection::NameSelect(Seat::South),
-            Selection::NameSelect(Seat::South) =>
-                Selection::NameSelect(Seat::West),
-            Selection::NameSelect(Seat::West) => Selection::Unselected,
-            _ => Selection::Unselected,
+            Selection::Unselected        => Selection::NameSelect(Seat::North),
+            Selection::NameSelect(_)     =>
+                Selection::FieldSelect(0, EntryField::Contract),
+            Selection::FieldSelect(_, _) => Selection::NameSelect(Seat::North),
         };
 
         self.input_state_.selection_ = new_selection;
         self.input_state_.entry_ = None;
+    }
+
+    fn move_left(&mut self) {
+        self.input_state_.selection_ = match self.input_state_.selection_ {
+            Selection::NameSelect(_) => Selection::NameSelect(Seat::West),
+            _ => self.input_state_.selection_,
+        }
+    }
+
+    fn move_right(&mut self) {
+        self.input_state_.selection_ = match self.input_state_.selection_ {
+            Selection::NameSelect(_) => Selection::NameSelect(Seat::East),
+            _ => self.input_state_.selection_,
+        }
+    }
+
+    fn move_up(&mut self) {
+        self.input_state_.selection_ = match self.input_state_.selection_ {
+            Selection::NameSelect(_) => Selection::NameSelect(Seat::North),
+            _ => self.input_state_.selection_,
+        }
+    }
+
+    fn move_down(&mut self) {
+        self.input_state_.selection_ = match self.input_state_.selection_ {
+            Selection::NameSelect(_) => Selection::NameSelect(Seat::South),
+            _ => self.input_state_.selection_,
+        }
     }
 
     fn enter_input(&mut self) {
@@ -233,6 +271,10 @@ impl Interface {
     }
 
     fn input_char(&mut self, c : char) {
+        if !self.input_state_.entry_.is_some() {
+            self.navigate(c);
+            return;
+        }
         match c {
             '\x7f' => {self.input_state_.entry_.as_mut().unwrap().pop();},
             _      => self.input_state_.entry_.as_mut().unwrap().push(c),
@@ -269,15 +311,25 @@ impl Interface {
     fn draw_table(&self) {
         let table_win = &self.table_window_;
         let midpoint = table_win.get_max_y() / 2;
+        let ew_length = self.east().len() + self.west().len();
+        let midpoint_offset = if ew_length as i32 >= table_win.get_max_x() { 1 } else { 0 };
+
         &table_win.clear();
+        set_field_cursor(&table_win, FieldStatus::NotSelected);
+        table_win.mvaddch(midpoint, 0, '^');
+        table_win.mvaddch(midpoint, table_win.get_max_x() - 1, 'v');
+
         set_field_cursor(&table_win, self.input_state_.is_north());
         center_pad(&table_win, self.north(), 0);
+
         set_field_cursor(&table_win, self.input_state_.is_south());
         center_pad(&table_win, self.south(), table_win.get_max_y() - 1);
+
         set_field_cursor(&table_win, self.input_state_.is_east());
-        right_justify(&table_win, self.east(), midpoint);
+        right_justify(&table_win, self.east(), midpoint + midpoint_offset);
+
         set_field_cursor(&table_win, self.input_state_.is_west());
-        left_justify(&table_win, self.west(), midpoint);
+        left_justify(&table_win, self.west(), midpoint - midpoint_offset);
     }
 
     fn draw_contract_value(&self, contract : &Contract, is_vulnerable : bool) {
@@ -300,6 +352,12 @@ impl Interface {
                                     i + number, scorer.score_result(i)));
         }
         val_win.color_set(CURSOR_NORMAL);
+    }
+
+    fn draw_entries(&self) {
+        for entry in &self.entries_ {
+            self.draw_entry(entry);
+        };
     }
 
     fn draw_entry(&self, entry : &Entry) {
@@ -334,12 +392,15 @@ impl Interface {
     }
 
     fn draw_input(&self) {
-        self.entry_window_.mv(0, 0);
         self.entry_window_.clear();
+        self.entry_window_.mv(0, 0);
         let mut x = 0;
         for c in self.input().chars() {
             self.entry_window_.addch(c);
             x = x + 1;
+        }
+        for i in x..self.entry_window_.get_max_x() {
+            self.entry_window_.addch(' ');
         }
         self.root_window_.mv(0, x);
     }
