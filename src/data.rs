@@ -40,7 +40,6 @@ pub struct Entry {
     declarer_ : Seat,
     name_ : String,
     contract_ : Option<Contract>,
-    score_ : Option<Score>,
     board_num_ : u32,
     ns_vulnerable_ : bool,
     ew_vulnerable_ : bool,
@@ -54,7 +53,6 @@ impl Entry {
             name_ : String::from(table.get_player(declarer)),
             declarer_ : declarer,
             contract_ : None,
-            score_ : None,
             board_num_ : board_num,
             ns_vulnerable_ : ((board_num - 1) & 1 == 1),
             ew_vulnerable_ : ((board_num - 1) & 2 == 2),
@@ -65,7 +63,7 @@ impl Entry {
 
     pub fn set_contract(&mut self, c : Contract) {
         self.contract_ = Some(c);
-        self.score_ = Some(Score::from_contract(c, self.is_vulnerable()));
+        self.recompute();
     }
 
     pub fn has_contract(&self) -> bool {
@@ -87,18 +85,34 @@ impl Entry {
         }
     }
 
-    pub fn record(&mut self, margin : i32) -> Result<(), &str> {
-        let score = match self.score_ {
-            None => return Err("set the contract first, doofus."),
-            Some(ref s) => s,
-        };
+    pub fn set_vulnerable(&mut self, status : bool) {
+        match self.declarer_ {
+            Seat::North | Seat::South => self.ns_vulnerable_ = status,
+            Seat::East  | Seat::West  => self.ew_vulnerable_ = status,
+        }
+        self.recompute();
+    }
+
+    pub fn record(&mut self, margin : i32) {
         self.result_ = Some(margin);
-        self.value_  = Some(score.score_result(margin));
-        Ok(())
+        self.recompute();
+    }
+
+    fn recompute(&mut self) {
+        self.value_ = match (self.contract_.as_ref(), self.result_) {
+            (Some(c), Some(r)) =>
+                Some(Score::from_contract(c,
+                                          self.is_vulnerable()).score_result(r)),
+            _ => None,
+        };
     }
 
     pub fn name(&self) -> &str {
         &self.name_
+    }
+
+    pub fn set_name(&mut self, name : String) {
+        self.name_ = name
     }
 
     pub fn result(&self) -> Option<i32> {

@@ -31,7 +31,7 @@ impl Score {
         }
     }
 
-    pub fn from_contract(contract : Contract, is_vulnerable : bool) -> Score {
+    pub fn from_contract(contract : &Contract, is_vulnerable : bool) -> Score {
         let trick_value = match contract.suit {
             ContractSuit::Clubs | ContractSuit::Diamonds => 20,
             _                                            => 30,
@@ -105,7 +105,7 @@ impl Score {
     }
 }
 
-pub fn score_game(contract : Contract, margin : i32, is_vulnerable : bool)
+pub fn score_game(contract : &Contract, margin : i32, is_vulnerable : bool)
     -> i32 {
     Score::from_contract(contract, is_vulnerable).score_result(margin)
 }
